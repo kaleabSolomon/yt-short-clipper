@@ -204,6 +204,17 @@ class AutoClipperCore:
         cmd_str = ' '.join(f'"{arg}"' if ' ' in str(arg) else str(arg) for arg in cmd)
         self.log(f"  🎬 {description} Command:")
         self.log(f"     {cmd_str}")
+
+    @staticmethod
+    def _get_ytdlp_reliability_options() -> dict:
+        """Options that make yt-dlp more tolerant of slow or unstable downloads."""
+        return {
+            "socket_timeout": 60,
+            "retries": 10,
+            "fragment_retries": 10,
+            "extractor_retries": 3,
+            "concurrent_fragment_downloads": 1,
+        }
     
     
     @staticmethod
@@ -506,6 +517,7 @@ Transcript:
             'no_warnings': False,
             'extract_flat': False,
         }
+        ydl_opts.update(self._get_ytdlp_reliability_options())
         
         # Only request subtitles if a real language is selected (skip for AI transcription mode)
         if self.subtitle_language and self.subtitle_language != "none":
@@ -756,6 +768,11 @@ Transcript:
                 self.ytdlp_path,
                 "-f", format_selector,
                 "--format-sort", "res,br",
+                "--socket-timeout", "60",
+                "--retries", "10",
+                "--fragment-retries", "10",
+                "--extractor-retries", "3",
+                "--concurrent-fragments", "1",
                 *base_args,
                 *strategy["extra_args"],
             ]
