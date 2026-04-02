@@ -423,16 +423,21 @@ def check_dependency(name: str, app_dir: Path) -> bool:
     Returns:
         bool: True if installed, False otherwise
     """
+    import shutil
     os_type, _ = get_os_info()
     
     if name == 'ffmpeg':
         exe_name = "ffmpeg.exe" if os_type == 'windows' else "ffmpeg"
         path = app_dir / "ffmpeg" / exe_name
-        return path.exists()
+        if path.exists():
+            return True
+        return shutil.which(exe_name) is not None
     
     elif name == 'deno':
         exe_name = "deno.exe" if os_type == 'windows' else "deno"
         path = app_dir / "bin" / exe_name
-        return path.exists()
+        if path.exists():
+            return True
+        return shutil.which(exe_name) is not None
     
     return False

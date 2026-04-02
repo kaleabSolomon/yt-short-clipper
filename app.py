@@ -229,7 +229,7 @@ class YTShortClipperApp(ctk.CTk):
         url_input_container.pack(fill="x", pady=(0, 8))
         
         self.url_var = ctk.StringVar()
-        self.url_var.trace("w", self.on_url_change)
+        self.url_var.trace_add("write", self.on_url_change)
         self.url_entry = ctk.CTkEntry(url_input_container, textvariable=self.url_var, 
             placeholder_text="Paste YouTube link...", width=220, height=32, border_width=1,
             border_color=("#3a3a3a", "#2a2a2a"), fg_color=("#1a1a1a", "#0a0a0a"))
@@ -594,10 +594,14 @@ class YTShortClipperApp(ctk.CTk):
         )
     
     def load_config(self):
-        api_key = self.config.get("api_key", "")
-        base_url = self.config.get("base_url", "https://api.openai.com/v1")
-        model = self.config.get("model", "")
-        
+        # Prefer the new provider-based config, but keep root keys as fallback
+        ai_providers = self.config.get("ai_providers", {})
+        hf_config = ai_providers.get("highlight_finder", {})
+
+        api_key = (hf_config.get("api_key", "") or self.config.get("api_key", "")).strip()
+        base_url = (hf_config.get("base_url", "") or self.config.get("base_url", "https://api.openai.com/v1")).strip()
+        model = (hf_config.get("model", "") or self.config.get("model", "")).strip()
+
         if api_key:
             try:
                 self.client = OpenAI(api_key=api_key, base_url=base_url)
@@ -606,10 +610,12 @@ class YTShortClipperApp(ctk.CTk):
                     self.api_dot.configure(text_color="#27ae60")  # Green
                     self.api_status_label.configure(text=model[:15] if model else "Connected")
             except:
+                self.client = None
                 if hasattr(self, 'api_dot'):
                     self.api_dot.configure(text_color="#e74c3c")  # Red
                     self.api_status_label.configure(text="Invalid key")
         else:
+            self.client = None
             if hasattr(self, 'api_dot'):
                 self.api_dot.configure(text_color="#e74c3c")  # Red
                 self.api_status_label.configure(text="Not configured")
@@ -1078,8 +1084,23 @@ class YTShortClipperApp(ctk.CTk):
         self.start_btn.configure(state="normal", text="Find Highlights")
         
         # Legacy validation (backward compatibility)
+        # Prefer provider-based config, but allow root config as fallback.
         if not self.client:
-            messagebox.showerror("Error", "Configure API settings first!\nClick ⚙️ button.")
+            ai_providers = self.config.get("ai_providers", {})
+            hf_config = ai_providers.get("highlight_finder", {})
+            hf_api_key = hf_config.get("api_key", "").strip()
+            hf_base_url = hf_config.get("base_url", "https://api.openai.com/v1").strip()
+            if hf_api_key:
+                try:
+                    self.client = OpenAI(api_key=hf_api_key, base_url=hf_base_url)
+                except Exception:
+                    pass
+        if not self.client:
+            messagebox.showerror(
+                "Error",
+                "Configure Highlight Finder in Settings → AI API Settings first.\n"
+                "The app now uses provider-based API settings."
+            )
             return
         
         url = self.url_var.get().strip()
