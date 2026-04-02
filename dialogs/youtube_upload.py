@@ -14,12 +14,13 @@ from PIL import Image
 class YouTubeUploadDialog(ctk.CTkToplevel):
     """Dialog for uploading video to YouTube with SEO metadata"""
     
-    def __init__(self, parent, clip: dict, openai_client, model: str, temperature: float = 1.0):
+    def __init__(self, parent, clip: dict, openai_client, model: str, temperature: float = 1.0, output_language: str = "English"):
         super().__init__(parent)
         self.clip = clip
         self.openai_client = openai_client
         self.model = model
         self.temperature = temperature
+        self.output_language = output_language
         self.uploading = False
         
         self.title("Upload to YouTube")
@@ -212,7 +213,8 @@ class YouTubeUploadDialog(ctk.CTkToplevel):
                     self.clip['title'],
                     self.clip['hook_text'],
                     self.model,
-                    self.temperature
+                    self.temperature,
+                    self.output_language
                 )
                 self.after(0, lambda: self.set_metadata(metadata))
             except Exception as e:

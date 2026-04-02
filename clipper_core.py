@@ -141,7 +141,7 @@ class AutoClipperCore:
         self.ytdlp_path = ytdlp_path
         self.output_dir = Path(output_dir)
         self.temperature = temperature
-        self.system_prompt = system_prompt or self.get_default_prompt()
+        self.system_prompt = system_prompt or self.get_default_prompt(output_language)
         self.watermark_settings = watermark_settings or {"enabled": False}
         self.credit_watermark_settings = credit_watermark_settings or {"enabled": False}
         self.channel_name = ""  # Will be set after download
@@ -215,12 +215,23 @@ class AutoClipperCore:
             "extractor_retries": 3,
             "concurrent_fragment_downloads": 1,
         }
+
+    @staticmethod
+    def _output_language_label(output_language: str) -> str:
+        """Normalize the selected output language for prompt text."""
+        value = (output_language or "English").strip().lower()
+        if "amh" in value or "አማር" in value:
+            return "Amharic (አማርኛ)"
+        return "English"
     
     
     @staticmethod
-    def get_default_prompt():
+    def get_default_prompt(output_language: str = "English"):
         """Get default system prompt for highlight detection"""
-        return """Kamu adalah EDITOR SHORT-FORM TIER A untuk konten PODCAST viral (TikTok / Reels / Shorts).
+        language_label = AutoClipperCore._output_language_label(output_language)
+        return """You are a top-tier short-form editor for viral podcast clips.
+
+All user-facing text fields must be written in {language_label}.
 
 OUTPUT ANDA AKAN LANGSUNG DIGUNAKAN UNTUK PRODUKSI.
 Kesalahan durasi atau format = GAGAL TOTAL.
@@ -358,7 +369,7 @@ HOOK TEXT (HARUS TAJAM & MENJUAL)
 WAJIB:
 
 * Maksimal 15 kata
-* Bahasa Indonesia casual
+* {language_label} casual
 * TANPA emoji
 * WAJIB menyebut NAMA ORANG yang berbicara
 * Harus berupa kutipan, statement tajam, atau punchline
@@ -404,7 +415,7 @@ KONTEN
 {video_context}
 
 Transcript:
-{transcript}"""
+{transcript}""".replace("{language_label}", language_label)
     
     def process(self, url: str, num_clips: int = 5, add_captions: bool = True, add_hook: bool = True):
         """Main processing pipeline"""

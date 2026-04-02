@@ -299,11 +299,12 @@ class BrowsePage(ctk.CTkFrame):
         ai_providers = self.config.get("ai_providers", {})
         yt_config = ai_providers.get("youtube_title_maker", {})
         model = yt_config.get("model", self.config.get("model", "gpt-4.1"))
+        output_language = self.config.get("content_language", "English")
         
         # Open Repliz account selection dialog
         from dialogs.repliz_upload import ReplizUploadDialog
         ReplizUploadDialog(self, clip_data, access_key, secret_key, 
-            yt_client, model, self.config.get("temperature", 1.0))
+            yt_client, model, self.config.get("temperature", 1.0), output_language)
     
     
     def open_youtube_url(self, url: str):

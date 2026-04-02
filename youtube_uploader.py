@@ -290,7 +290,33 @@ class YouTubeUploader:
             }
 
 
-def generate_seo_metadata(client, clip_title: str, hook_text: str, model: str = "gpt-4.1", temperature: float = 1.0) -> dict:
+def generate_seo_metadata(
+    client,
+    clip_title: str,
+    hook_text: str,
+    model: str = "gpt-4.1",
+    temperature: float = 1.0,
+    output_language: str = "English"
+) -> dict:
+    return generate_seo_metadata_with_language(client, clip_title, hook_text, model, temperature, output_language)
+
+
+def _normalize_output_language(output_language: str) -> str:
+    """Normalize output language for prompt text."""
+    value = (output_language or "English").strip().lower()
+    if "amh" in value or "አማር" in value:
+        return "Amharic (አማርኛ)"
+    return "English"
+
+
+def generate_seo_metadata_with_language(
+    client,
+    clip_title: str,
+    hook_text: str,
+    model: str = "gpt-4.1",
+    temperature: float = 1.0,
+    output_language: str = "English"
+) -> dict:
     """
     Generate SEO-optimized title and description using GPT
     
@@ -303,29 +329,30 @@ def generate_seo_metadata(client, clip_title: str, hook_text: str, model: str = 
     Returns:
         dict with title, description, tags
     """
-    prompt = f"""Kamu adalah expert YouTube SEO untuk konten short-form (Shorts/Reels/TikTok).
+    language_label = _normalize_output_language(output_language)
+    prompt = f"""You are a YouTube SEO expert for short-form content (Shorts/Reels/TikTok).
 
-Berdasarkan informasi clip berikut, buatkan:
-1. Title yang catchy dan SEO-friendly (max 100 karakter, include emoji)
-2. Description yang engaging dengan hashtags (max 500 karakter)
-3. Tags yang relevan (5-10 tags)
+Based on the clip information below, create:
+1. A catchy SEO-friendly title (max 100 characters, emoji allowed)
+2. An engaging description with hashtags (max 500 characters)
+3. Relevant tags (5-10 tags)
 
 Info Clip:
-- Judul: {clip_title}
+- Title: {clip_title}
 - Hook: {hook_text}
 
 Format response dalam JSON:
 {{
-    "title": "judul dengan emoji",
-    "description": "deskripsi dengan hashtags",
+    "title": "title with emoji",
+    "description": "description with hashtags",
     "tags": ["tag1", "tag2", "tag3"]
 }}
 
 PENTING:
-- Title harus under 100 karakter
-- Gunakan bahasa Indonesia
-- Include trending hashtags seperti #shorts #viral #fyp
-- Buat yang clickbait tapi tetap relevan
+- Title must stay under 100 characters
+- Write the output in {language_label}
+- Include trending hashtags such as #shorts #viral #fyp
+- Keep it clickable but relevant
 
 Return HANYA JSON, tanpa text lain."""
 
@@ -358,5 +385,5 @@ Return HANYA JSON, tanpa text lain."""
         return {
             'title': f"🔥 {clip_title}"[:100],
             'description': f"{hook_text}\n\n#shorts #viral #fyp #podcast",
-            'tags': ['shorts', 'viral', 'fyp', 'podcast', 'indonesia']
+            'tags': ['shorts', 'viral', 'fyp', 'podcast']
         }

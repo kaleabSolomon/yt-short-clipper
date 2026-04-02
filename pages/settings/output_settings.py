@@ -46,6 +46,23 @@ class OutputSettingsSubPage(BaseSettingsSubPage):
         # Open folder button
         ctk.CTkButton(folder_frame, text="📂 Open Output Folder", height=36, fg_color="gray",
             command=self.open_output_folder).pack(fill="x", pady=(10, 0))
+
+        # Generated Text Language Section
+        language_section = self.create_section("Generated Text Language")
+        language_frame = ctk.CTkFrame(language_section, fg_color="transparent")
+        language_frame.pack(fill="x", padx=15, pady=(0, 12))
+
+        ctk.CTkLabel(language_frame, text="Language used for generated titles, descriptions, hook text, and default prompts",
+            font=ctk.CTkFont(size=11), text_color="gray", justify="left", wraplength=600).pack(anchor="w", pady=(0, 8))
+
+        self.language_var = ctk.StringVar(value="English")
+        self.language_dropdown = ctk.CTkOptionMenu(
+            language_frame,
+            values=["English", "Amharic"],
+            variable=self.language_var,
+            height=36
+        )
+        self.language_dropdown.pack(fill="x")
         
         # Face Tracking Mode Section
         tracking_section = self.create_section("Face Tracking Mode")
@@ -134,6 +151,9 @@ class OutputSettingsSubPage(BaseSettingsSubPage):
         # Face tracking mode
         face_tracking = config_dict.get("face_tracking_mode", "opencv")
         self.face_tracking_var.set(face_tracking)
+
+        # Generated text language
+        self.language_var.set(config_dict.get("content_language", "English"))
     
     def save_settings(self):
         """Save settings"""
@@ -159,7 +179,15 @@ class OutputSettingsSubPage(BaseSettingsSubPage):
         # Update config
         config_dict["output_dir"] = output_dir
         config_dict["face_tracking_mode"] = self.face_tracking_var.get()
-        
+        config_dict["content_language"] = self.language_var.get()
+
+        # Keep the default highlight prompt aligned with the selected language unless
+        # the user has provided a custom provider-specific system message.
+        highlight_finder = config_dict.get("ai_providers", {}).get("highlight_finder", {})
+        if not highlight_finder.get("system_message", "").strip():
+            from clipper_core import AutoClipperCore
+            config_dict["system_prompt"] = AutoClipperCore.get_default_prompt(self.language_var.get())
+
         if self.on_save_callback:
             self.on_save_callback(config_dict)
         

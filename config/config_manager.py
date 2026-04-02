@@ -26,9 +26,19 @@ class ConfigManager:
                     config = self._migrate_to_multi_provider(config)
                 
                 # Add default system_prompt if not exists
+                if "content_language" not in config:
+                    config["content_language"] = "English"
+
                 if "system_prompt" not in config:
                     from clipper_core import AutoClipperCore
-                    config["system_prompt"] = AutoClipperCore.get_default_prompt()
+                    config["system_prompt"] = AutoClipperCore.get_default_prompt(config["content_language"])
+                else:
+                    # Auto-migrate the legacy Indonesian default prompt to the selected language.
+                    legacy_prompt_marker = "Kamu adalah EDITOR SHORT-FORM TIER A"
+                    if legacy_prompt_marker in config["system_prompt"]:
+                        from clipper_core import AutoClipperCore
+                        config["system_prompt"] = AutoClipperCore.get_default_prompt(config["content_language"])
+                        self.save_config(config)
                 # Add default temperature if not exists
                 if "temperature" not in config:
                     config["temperature"] = 1.0
@@ -90,7 +100,8 @@ class ConfigManager:
             "tts_model": "tts-1",  # Kept for backward compatibility
             "temperature": 1.0,
             "output_dir": str(self.output_dir),
-            "system_prompt": AutoClipperCore.get_default_prompt(),
+            "content_language": "English",
+            "system_prompt": AutoClipperCore.get_default_prompt("English"),
             "installation_id": str(uuid.uuid4()),
             "ai_providers": self._get_default_ai_providers(),
             "watermark": {

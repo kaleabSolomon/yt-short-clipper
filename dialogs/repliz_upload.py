@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 class ReplizUploadDialog(ctk.CTkToplevel):
     """Dialog for selecting Repliz accounts and uploading video"""
     
-    def __init__(self, parent, clip_data: dict, access_key: str, secret_key: str, openai_client=None, model: str = "gpt-4.1", temperature: float = 1.0):
+    def __init__(self, parent, clip_data: dict, access_key: str, secret_key: str, openai_client=None, model: str = "gpt-4.1", temperature: float = 1.0, output_language: str = "English"):
         super().__init__(parent)
         
         self.clip_data = clip_data
@@ -24,6 +24,7 @@ class ReplizUploadDialog(ctk.CTkToplevel):
         self.openai_client = openai_client
         self.model = model
         self.temperature = temperature
+        self.output_language = output_language
         self.accounts = []
         self.selected_accounts = []
         self.account_checkboxes = []
@@ -215,8 +216,11 @@ class ReplizUploadDialog(ctk.CTkToplevel):
             try:
                 hook = self.clip_data.get("hook_text", "")
                 title = self.clip_data.get("title", "")
+                language_label = "Amharic (አማርኛ)" if "amh" in (self.output_language or "").lower() else "English"
                 
                 prompt = f"""Generate a catchy social media post title and description for this short video clip.
+
+Write the title and description in {language_label}.
 
 Video Title: {title}
 Hook/Content: {hook}

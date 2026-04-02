@@ -26,7 +26,8 @@ class HighlightFinderSettingsPage(BaseProviderSettingsPage):
     def _reset_system_message(self):
         """Reset system message to default"""
         from clipper_core import AutoClipperCore
-        default_prompt = AutoClipperCore.get_default_prompt()
+        content_language = self.config.get("content_language", "English")
+        default_prompt = AutoClipperCore.get_default_prompt(content_language)
         self.system_message_textbox.delete("1.0", "end")
         self.system_message_textbox.insert("1.0", default_prompt)
     
